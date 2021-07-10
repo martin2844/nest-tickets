@@ -1,3 +1,4 @@
+import { IsEmail } from "class-validator";
 import { Ticket } from "src/tickets/ticket.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
@@ -9,8 +10,14 @@ export class User {
     @Column()
     name: string;
 
-    @Column()
+    @IsEmail()
+    @Column({unique: true})
     email: string;
+
+    @Column({
+        nullable: true
+    })
+    password: string;
 
     @Column()
     type: string;

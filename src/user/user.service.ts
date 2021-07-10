@@ -1,4 +1,4 @@
-import { Body, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Body, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { UserDto } from "./user.dto";
@@ -20,12 +20,41 @@ export class UserService {
         return user;
     }
 
+    async findByMail(email: string):Promise<User> {
+        let user = await this.repository.findOne({
+            where: {
+                email
+            }
+        })
+        if(!user) {
+            throw new NotFoundException();
+        }
+        return user;
+    }
+
+    
+    async checkIfUserExists(email: string):Promise<Boolean> {
+        let user = await this.repository.findOne({
+            where: {
+                email
+            }
+        })
+        if(user) {
+            throw new BadRequestException(["User allready exists"]);
+        }
+        return true;
+    }
+
+
     async save(input: UserDto) {
-        return this.repository.save({
+        let newUser = await this.repository.save({
             ...input,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         })
+        newUser.password = "";
+        newUser.password2 = "";
+        return newUser
     }
         
 }

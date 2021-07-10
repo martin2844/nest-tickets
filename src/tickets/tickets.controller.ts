@@ -27,10 +27,11 @@ export class TicketsController {
     })
   }
 
-
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id:number): Promise<Ticket> {
-    let ticket = await this.repository.findOne(id);
+    let ticket = await this.repository.findOne(id, {
+      relations: ['assignedTo', 'owner']
+    });
     if(!ticket) {
       throw new NotFoundException()
     }

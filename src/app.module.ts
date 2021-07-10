@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import ormConfig from './config/orm.config';
 import ormConfigProd from './config/orm.config.prod';
 import { Ticket } from './tickets/ticket.entity';
@@ -18,6 +19,7 @@ import { UserModule } from './user/user.module';
     TypeOrmModule.forRootAsync({
       useFactory: process.env.NODE_ENV !== "prod" ? ormConfig : ormConfigProd
     }),
+  AuthModule,
   TicketsModule,
   UserModule
 ],
