@@ -1,8 +1,11 @@
-import { Controller, Delete, Get, Post, Patch, Param, Body, HttpCode, ParseIntPipe, ValidationPipe, Logger, NotFoundException } from '@nestjs/common';
+import { Controller, Delete, Get, Post, Patch, Param, Body, HttpCode, ParseIntPipe, ValidationPipe, Logger, UseGuards } from '@nestjs/common';
 import { TicketDto } from './ticket.dto';
 import { UpdateTicketDto } from './update-ticket.dto';
 import { Ticket } from './ticket.entity';
 import { TicketsService } from './tickets.service';
+import { CurrentUser } from 'src/auth/current-user.decorator';
+import { User } from 'src/user/user.entity';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('tickets')
 export class TicketsController {
@@ -23,6 +26,12 @@ export class TicketsController {
     return this.service.findOne(id);
   }
 
+  @Get('/user/:id')
+  @UseGuards(AuthGuard('jwt'))
+  async findFromUser(@Param('id', ParseIntPipe) id:number, @CurrentUser() user: User): Promise<Ticket[] | null> {
+    return this.service.findFromUser(id, user);
+  }
+
   @Get()
   async findAll() {
     this.logger.log("Searching all tickets");
@@ -31,19 +40,24 @@ export class TicketsController {
     return tickets
   }
 
+  //Create Ticket API, needs to be authenticated to create a Ticket.
+  //Owner will be Current User.
   @Post()
-  async create(@Body(ValidationPipe) input: TicketDto){
-    return this.service.create(input);
+  @UseGuards(AuthGuard('jwt'))
+  async create(@Body(ValidationPipe) input: TicketDto, @CurrentUser() user: User){
+    return this.service.create(input, user); 
   }
 
   @Patch(':id')
-  async modifyOne(@Param('id') id, @Body() input:UpdateTicketDto){
-      return this.service.modifyOne(id, input);
+  @UseGuards(AuthGuard('jwt'))
+  async modifyOne(@Param('id') id, @Body() input:UpdateTicketDto, @CurrentUser() user: User){
+      return this.service.modifyOne(id, input, user);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  async deleteOne(@Param('id', ParseIntPipe) id: number){
-      return this.service.deleteOne(id);
+  @UseGuards(AuthGuard('jwt'))
+  async deleteOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User){
+      return this.service.deleteOne(id, user);
   }
 }

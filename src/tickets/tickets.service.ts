@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/user/user.entity';
 import { MoreThan, Repository } from 'typeorm';
 import { TicketDto } from './ticket.dto';
 import { Ticket } from './ticket.entity';
@@ -25,6 +26,20 @@ export class TicketsService {
       })
     }
 
+    async findFromUser(id: number, user: User): Promise<Ticket[] | null> {
+      
+      if(id !== user.id) {
+        throw new UnauthorizedException()
+      }
+
+      return this.repository.find({
+          where: {
+            owner: id
+          }
+      })
+
+    }
+
     //Finds ticket by id
     async findOne(id:number): Promise<Ticket> {
       let ticket = await this.repository.findOne(id, {
@@ -42,19 +57,23 @@ export class TicketsService {
     }
 
     //Creates a Ticket
-    async create(input: TicketDto): Promise<Ticket> {
+    async create(input: TicketDto, user: User): Promise<Ticket> {
       return this.repository.save({
         ...input,
+        owner: user,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       })
     }
 
     //Modifies a Ticket
-    async modifyOne(id: number, input: UpdateTicketDto): Promise<Ticket> {
+    async modifyOne(id: number, input: UpdateTicketDto, user: User): Promise<Ticket> {
       const ticket = await this.repository.findOne(id);
       if(!ticket) {
         throw new NotFoundException()
+      }
+      if(user.type !== "Admin") {
+        throw new UnauthorizedException();
       }
       return this.repository.save({
         ...ticket,
@@ -64,10 +83,13 @@ export class TicketsService {
     }
 
     //Deletes a ticket
-    async deleteOne(id:number): Promise<Boolean>{
+    async deleteOne(id:number, user: User): Promise<Boolean>{
       const ticket = await this.repository.findOne(id);
       if(!ticket) {
         throw new NotFoundException()
+      }
+      if(user.type !== "Admin") {
+        throw new UnauthorizedException();
       }
       await this.repository.remove(ticket);
       return true;
