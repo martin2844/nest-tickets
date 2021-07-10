@@ -1,81 +1,49 @@
 import { Controller, Delete, Get, Post, Patch, Param, Body, HttpCode, ParseIntPipe, ValidationPipe, Logger, NotFoundException } from '@nestjs/common';
-import { MoreThan, Repository } from 'typeorm';
 import { TicketDto } from './ticket.dto';
 import { UpdateTicketDto } from './update-ticket.dto';
 import { Ticket } from './ticket.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { TicketsService } from './tickets.service';
 
 @Controller('tickets')
 export class TicketsController {
   private readonly logger = new Logger(TicketsController.name);
   
   constructor(
-    @InjectRepository(Ticket)
-    private readonly repository: Repository<Ticket>
+    private readonly service: TicketsService
     ) {}
  
 
   @Get('/thisYear')
   async thisYear():Promise<Ticket[]> {
-    return this.repository.find({
-      where: {
-        createdAt: MoreThan(new Date('2021-01-01T00:00:00'))
-      },
-      order: {
-        createdAt: 'DESC'
-      }
-    })
+    return this.service.thisYear();
   }
 
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id:number): Promise<Ticket> {
-    let ticket = await this.repository.findOne(id, {
-      relations: ['assignedTo', 'owner']
-    });
-    if(!ticket) {
-      throw new NotFoundException()
-    }
-    return ticket;
+    return this.service.findOne(id);
   }
 
   @Get()
   async findAll() {
     this.logger.log("Searching all tickets");
-    let tickets = await this.repository.find();
+    let tickets = await this.service.findAll();
     this.logger.debug(`Total of ${tickets.length} found`);
     return tickets
   }
+
   @Post()
-  //Validation pipe can be removed here since it was enabled globally at main.ts
   async create(@Body(ValidationPipe) input: TicketDto){
-      return this.repository.save({
-        ...input,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
+    return this.service.create(input);
   }
 
   @Patch(':id')
   async modifyOne(@Param('id') id, @Body() input:UpdateTicketDto){
-    const ticket = await this.repository.findOne(id);
-    if(!ticket) {
-      throw new NotFoundException()
-    }
-    return await this.repository.save({
-      ...ticket,
-      ...input,
-      updatedAt: new Date()
-    })
+      return this.service.modifyOne(id, input);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  async deleteOne(@Param('id') id){
-    const ticket = await this.repository.findOne('id');
-    if(!ticket) {
-      throw new NotFoundException()
-    }
-    await this.repository.remove(ticket);
-    return true;
+  async deleteOne(@Param('id', ParseIntPipe) id: number){
+      return this.service.deleteOne(id);
   }
 }

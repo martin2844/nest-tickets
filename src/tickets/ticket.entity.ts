@@ -22,12 +22,11 @@ export class Ticket {
     updatedAt: Date;
 
     @ManyToOne(() => User, user => user.tickets)
-    @JoinColumn()
+    @JoinColumn({name: "assignedToId"})
     assignedTo: User;
 
     @ManyToOne(() => User, user => user.tickets)
-    @JoinColumn()
+    @JoinColumn({name: "ownerId"})
     owner: User;
-
 
 }
