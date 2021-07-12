@@ -1,3 +1,4 @@
+import { Expose } from "class-transformer";
 import { IsEmail } from "class-validator";
 import { Ticket } from "src/tickets/ticket.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
@@ -5,9 +6,11 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
+    @Expose()
     id: number;
 
     @Column()
+    @Expose()
     name: string;
 
     @IsEmail()

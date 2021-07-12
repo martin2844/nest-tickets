@@ -1,4 +1,4 @@
-import { Controller, Get, NotFoundException, Param, ParseIntPipe, Post, ValidationPipe, Body, BadRequestException } from "@nestjs/common";
+import { Controller, Get, NotFoundException, Param, ParseIntPipe, Post, ValidationPipe, Body, BadRequestException, SerializeOptions, UseInterceptors, ClassSerializerInterceptor } from "@nestjs/common";
 import { AuthService } from "src/auth/auth.service";
 import { UserDto } from "./user.dto";
 import { User } from "./user.entity";
@@ -6,6 +6,7 @@ import { UserService } from "./user.service";
 
 
 @Controller('users')
+@SerializeOptions({strategy: "excludeAll"})
 export class UserController {
 
 
@@ -13,16 +14,20 @@ export class UserController {
 
     
     @Get(":id")
+    @UseInterceptors(ClassSerializerInterceptor)
     async findOne(@Param('id', ParseIntPipe) id:number):Promise<User> {
         return this.service.findOne(id);
     }
 
     @Get('email/:email')
+    @UseInterceptors(ClassSerializerInterceptor)
     async findByMail(@Param('email') email:string):Promise<User>{
         return this.service.findByMail(email);
     }
+
     @Post()
-    async create(@Body(ValidationPipe) input:UserDto){
+    @UseInterceptors(ClassSerializerInterceptor)
+    async create(@Body(ValidationPipe) input:UserDto):Promise<User>{
 
         if(input.password !== input.password2) {
             throw new BadRequestException(["Passwords must match"]);
